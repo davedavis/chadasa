@@ -8,6 +8,9 @@ from concurrent.futures import TimeoutError
 from google.cloud import pubsub_v1
 
 from enums.sdm import Event
+from rich.console import Console
+
+console = Console()
 
 DEVICE_ACCESS_CONSOLE_PROJECT_ID = get_settings()["device_access_console_project_id"]
 CLOUD_PROJECT_ID = get_settings()["cloud_project_id"]
@@ -82,3 +85,6 @@ def monitor_sdm_messages(credentials_file, respond_to, lights_to_flash):
         except TimeoutError:
             streaming_pull_future.cancel()  # Trigger the shutdown.
             streaming_pull_future.result()  # Block until shutdown is complete.
+        except KeyboardInterrupt:
+            console.print("[bold green]Application terminated. No longer "
+                          "monitoring your nest devices. [/bold green] ")

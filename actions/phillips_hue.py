@@ -1,4 +1,3 @@
-"""Example script for using AIOHue connecting to a V2 Hue bridge."""
 import asyncio
 from aiohue.discovery import discover_nupnp
 from aiohue import HueBridgeV2

@@ -13,7 +13,7 @@
 # limitations under the License.
 
 import asyncio
-from actions.phillips_hue import get_bridge, flash_lights, get_light_ids
+from actions.phillips_hue import get_bridge, get_light_ids
 from auth.auth_utils import get_credentials
 from enums.sdm import Event
 from sdm.device_management import get_sdm_hierarchy, monitor_sdm_messages
@@ -41,11 +41,7 @@ def main():
         hue_host = asyncio.run(get_bridge())
         asyncio.run(get_light_ids(hue_host))
     except KeyboardInterrupt:
-        pass
-
-    # What do you want to respond to?
-    # Current options are: BELL_PRESS_DETECTED or PERSON_DETECTED.
-    respond_to = Event.BELL_PRESS_DETECTED
+        console.print("Bye.")
 
     # What lights would you like to flash?
     console.print(
@@ -59,6 +55,10 @@ def main():
         "161d251f-c9f2-45b8-a9e3-e77486c8b83c",
         "fa462ec8-372b-4afc-a9cc-bf9e17dc8e7b",
     ]
+
+    # What do you want to respond to?
+    # Current options are: BELL_PRESS_DETECTED or PERSON_DETECTED.
+    respond_to = Event.BELL_PRESS_DETECTED
 
     # Subscribe to SDM events
     monitor_sdm_messages(authorized_credentials, respond_to, lights_to_flash)
