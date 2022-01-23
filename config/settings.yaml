@@ -1,0 +1,27 @@
+# Google Cloud OAuth2 configuration
+###############################################################################
+# The below configuration parameters are used to authenticate using the       #
+# recommended OAuth2 flow. For more information on authenticating with OAuth2 #
+# see: https://developers.google.com/nest/device-access/get-started           #
+###############################################################################
+
+
+device_access_console_project_id : "{Enter Your Own Value Here}"
+cloud_project_id : "{Enter Your Own Value Here}"
+pub_sub_subscription_id : "{Enter Your Own Value Here}"
+
+
+# Phillips Hue configuration
+###############################################################################
+# Required for using the Phillips Hue actions. If you want to flash your      #
+# lights or change their colour in response to a Nest event, you will need to #
+# configure the bridge IP address and username here. If you don't have a hue  #
+# API user, follow instructions and get one locally to use here:              #
+# https://developers.meethue.com/develop/get-started-2/#so-lets-get-started   #
+###############################################################################
+
+phillips_hue_api_user: "{Enter Your Own Value Here}"
+
+
+
+

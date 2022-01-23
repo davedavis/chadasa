@@ -1,62 +1,68 @@
-import json
-from googleapiclient.discovery import build
-from concurrent.futures import TimeoutError
-from google.cloud import pubsub_v1
+# Copyright 2022 Dave Davis
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+import asyncio
+from actions.phillips_hue import get_bridge, flash_lights, get_light_ids
 from auth.auth_utils import get_credentials
+from enums.sdm import Event
+from sdm.device_management import get_sdm_hierarchy, monitor_sdm_messages
+from rich.console import Console
 
-DEVICE_ACCESS_CONSOLE_PROJECT_ID = 'd67a6dea-4184-423f-ac66-22793ca538d0'
-CLOUD_PROJECT_ID = "chadasa-338300"
-PUB_SUB_SUBSCRIPTION_ID = "chadasa-subscription"
-
-
-def get_messages(credentials_file):
-    timeout = 20
-
-    subscriber = pubsub_v1.SubscriberClient(credentials=credentials_file)
-    subscription_path = subscriber.subscription_path(CLOUD_PROJECT_ID, PUB_SUB_SUBSCRIPTION_ID)
-
-    def callback(message: pubsub_v1.subscriber.message.Message) -> None:
-        print(f"Received {message.data!r}.")
-
-        # Grab the events
-        json_response = json.loads(message.data.decode())
-        for key, value in json_response['resourceUpdate']['events'].items():
-            print(f"{key}: {value}")
-
-        # Get custom attributes if they exist.
-        if message.attributes:
-            print("Attributes:")
-            for key in message.attributes:
-                value = message.attributes.get(key)
-                print(f"{key}: {value}")
-        message.ack()
-
-    streaming_pull_future = subscriber.subscribe(subscription_path, callback=callback)
-    print(f"Listening for messages on {subscription_path}..\n")
-
-    # Wrap subscriber in a 'with' block to automatically call close() when done.
-    with subscriber:
-        try:
-            # When `timeout` is not set, result() will block indefinitely,
-            # unless an exception is encountered first.
-            streaming_pull_future.result(timeout=timeout)
-            # streaming_pull_future.result()
-        except TimeoutError:
-            streaming_pull_future.cancel()  # Trigger the shutdown.
-            streaming_pull_future.result()  # Block until the shutdown is complete.
+console = Console()
 
 
-def main(authorized_credentials):
-    parent = "enterprises/" + DEVICE_ACCESS_CONSOLE_PROJECT_ID
-    sdm = build('smartdevicemanagement', 'v1', credentials=authorized_credentials)
-    structures = sdm.enterprises().structures().list(parent=parent).execute()
-    devices = sdm.enterprises().devices().list(parent=parent).execute()
+def main():
+    # Get Structures & Devices from SDM API
+    authorized_credentials = get_credentials("./client_secrets.json")
+    structures, devices = get_sdm_hierarchy(authorized_credentials)
 
-    print(structures)
-    print(devices)
+    console.print(
+        "[bold red]Nest Devices Detected![/bold red] The following structures "
+        "& devices were found on your network:"
+    )
+    console.print(structures, devices)
+
+    console.print(
+        "[bold red]Hue Lights Detected![/bold red] The following structures "
+        "& devices were found on your network:"
+    )
+    try:
+        hue_host = asyncio.run(get_bridge())
+        asyncio.run(get_light_ids(hue_host))
+    except KeyboardInterrupt:
+        pass
+
+    # What do you want to respond to?
+    # Current options are: BELL_PRESS_DETECTED or PERSON_DETECTED.
+    respond_to = Event.BELL_PRESS_DETECTED
+
+    # What lights would you like to flash?
+    console.print(
+        "[bold purple]Pick out the IDs from the lights on your"
+        " network that you want to flash and enter them in"
+        " the next method[/bold purple]"
+    )
+
+    # Important, replace with the IDs of your own lights.
+    lights_to_flash = [
+        "161d251f-c9f2-45b8-a9e3-e77486c8b83c",
+        "fa462ec8-372b-4afc-a9cc-bf9e17dc8e7b",
+    ]
+
+    # Subscribe to SDM events
+    monitor_sdm_messages(authorized_credentials, respond_to, lights_to_flash)
 
 
-if __name__ == '__main__':
-    authorized_credentials = get_credentials('./client_secrets.json')
-    main(authorized_credentials)
-    get_messages(authorized_credentials)
+if __name__ == "__main__":
+    main()

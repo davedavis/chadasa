@@ -80,12 +80,27 @@ The PUB_SUB_SUBSCRIPTION_ID is just the part after the last forward slash of
 the subscription you created. 
 
 
+### Output
+When you run the script, you should see something like this:
+![img.png](docs/images/output.png)
+
+- 1 is simply the standard API calls to the device and structure list endpoints.
+- 2 is the complete response as a byte string for you to handle how you like.
+- 3 is the events themselves. You can check for them and react to them as you see fit.
+
 
 ## WIP
+This is a personal project and is a work in progress. It's probably riddled with bugs
+and poor code. Use at your own risk and please feel free to submit a PR. 
+
+## To Do
+- Refactor with black
+- Create a class for the message responses
+- Add dependencies & attribution
+- 
 
 
-
-## Events
+## Events List Currently Handled
 - sdm.devices.events.DoorbellChime.Chime
 - sdm.devices.events.CameraPerson.Person
 - sdm.devices.events.CameraClipPreview.ClipPreview ['previewUrl']
